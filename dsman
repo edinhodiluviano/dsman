@@ -77,18 +77,34 @@ class RecordTemplateStore(argparse.Action):
         print('Dictionary written to {}.yaml in the current directory\
               '.format(os.path.basename(values)))
 
+
+class Database(object):
+    "Use the database with the context manager"
+    def __init__(self, folder='.', filename='dsman.db'):
+        self.folder = folder
+        self.filename = filename
+        self.fullfilename = os.path.join(self.folder, self.filename)
+
+    def __enter__(self):
+        self.conn = sqlite3.connect(self.fullfilename)
+        return self.conn
+
+    def __exit__(self):
+        self.conn.close()
+
+
+
 def list_projects():
     # connect to SQLite
-    conn = sqlite3.connect(config_folder + '/dsman.db')
-    c = conn.cursor()
-    c.execute('SELECT * FROM projects')
-    data = c.fetchall()
-    print("('created_on', 'created_at', 'project_name', 'project_desc'," +
-          "'project_path')")
-    for row in data :
-        print(row)
-    # Closes connection
-    conn.close()
+    with Database(folder=config_folder, filename='dsman.db') as conn:
+        c = conn.cursor()
+        c.execute('SELECT * FROM projects')
+        data = c.fetchall()
+        print("('created_on', 'created_at', 'project_name', " +
+              "'project_desc', 'project_path')")
+        for row in data :
+            print(row)
+
 
 MY_PARSER = argparse.ArgumentParser()
 MY_PARSER.add_argument('-r',
